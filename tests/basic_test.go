@@ -1,7 +1,6 @@
 package tests
 
 import (
-  "sync"
   "testing"
 	"github.com/bmeg/flame"
 )
@@ -75,9 +74,6 @@ func TestSplit(t *testing.T) {
 		close(in)
 	}()
 
-	wg := &sync.WaitGroup{}
-
-	wg.Add(2)
 	go func() {
 		i := 0
 		for o := range out1 {
@@ -89,7 +85,6 @@ func TestSplit(t *testing.T) {
 		if i != len(v) {
 			t.Errorf("Incorrect count received: %d != %d", i, len(v))
 		}
-		wg.Done()
 	}()
 	go func() {
 		i := 0
@@ -102,8 +97,7 @@ func TestSplit(t *testing.T) {
 		if i != len(v) {
 			t.Errorf("Incorrect count received: %d != %d", i, len(v))
 		}
-		wg.Done()
 	}()
 
-	wg.Wait()
+	wf.Wait()
 }

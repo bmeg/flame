@@ -1,12 +1,15 @@
 package flame
 
 import (
-	"golang.org/x/exp/constraints"
 	"sort"
+	"sync"
+
+	"golang.org/x/exp/constraints"
 )
 
 type Workflow struct {
-	Nodes []Process
+	WaitGroup    *sync.WaitGroup
+	Nodes        []Process
 }
 
 type KeyValue[K constraints.Ordered, V any] struct {
@@ -15,7 +18,6 @@ type KeyValue[K constraints.Ordered, V any] struct {
 }
 
 type Node[X, Y any] interface {
-	Init()
 	AddInput(i chan X)
 	GetOutput() chan Y
 	Connect(e Emitter[X])
@@ -26,7 +28,7 @@ type Emitter[X any] interface {
 }
 
 type Process interface {
-	Init()
+	Init(wf *Workflow)
 }
 
 func NewWorkflow() *Workflow {
@@ -34,9 +36,14 @@ func NewWorkflow() *Workflow {
 }
 
 func (wf *Workflow) Init() {
+	wf.WaitGroup = &sync.WaitGroup{}
 	for i := range wf.Nodes {
-		wf.Nodes[i].Init()
+		wf.Nodes[i].Init(wf)
 	}
+}
+
+func (wf *Workflow) Wait() {
+	wf.WaitGroup.Wait()
 }
 
 /**************************/
@@ -55,7 +62,8 @@ func AddMapper[X, Y any](w *Workflow, f func(X) Y) Node[X, Y] {
 	return n
 }
 
-func (n *MapNode[X, Y]) Init() {
+func (n *MapNode[X, Y]) Init(wf *Workflow) {
+	wf.WaitGroup.Add(1)
 	go func() {
 		for x := range n.Input {
 			y := n.Proc(x)
@@ -66,6 +74,7 @@ func (n *MapNode[X, Y]) Init() {
 		for i := range n.Outputs {
 			close(n.Outputs[i])
 		}
+		wf.WaitGroup.Done()
 	}()
 }
 
@@ -116,7 +125,8 @@ func (s *SortNode[X, Y]) Len() int {
 	return len(s.Queue)
 }
 
-func (s *SortNode[X, Y]) Init() {
+func (s *SortNode[X, Y]) Init(wf *Workflow) {
+	wf.WaitGroup.Add(1)
 	go func() {
 		for x := range s.Input {
 			s.Queue = append(s.Queue, x)
@@ -130,6 +140,7 @@ func (s *SortNode[X, Y]) Init() {
 		for i := range s.Outputs {
 			close(s.Outputs[i])
 		}
+		wf.WaitGroup.Done()
 	}()
 }
 
@@ -165,7 +176,8 @@ func AddReducer[X, Y any](w *Workflow, f func(X, Y) Y, start Y) Node[X, Y] {
 	return n
 }
 
-func (n *ReduceNode[X, Y]) Init() {
+func (n *ReduceNode[X, Y]) Init(wf *Workflow) {
+	wf.WaitGroup.Add(1)
 	go func() {
 		y := n.Start
 		for x := range n.Input {
@@ -177,6 +189,7 @@ func (n *ReduceNode[X, Y]) Init() {
 		for i := range n.Outputs {
 			close(n.Outputs[i])
 		}
+		wf.WaitGroup.Done()
 	}()
 }
 
