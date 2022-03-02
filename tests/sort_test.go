@@ -15,8 +15,9 @@ func TestIntSort(t *testing.T) {
 	in := make(chan flame.KeyValue[int, string], 10)
 
 	wf := flame.NewWorkflow()
+	inc := flame.AddSourceChan(wf, in)
 	a := flame.AddMapper(wf, KeyInc)
-	a.AddInput(in)
+	a.Connect(inc)
 
 	b := flame.AddKeySort[int, string](wf)
 	b.Connect(a)
@@ -47,8 +48,9 @@ func TestStringSort(t *testing.T) {
 	in := make(chan flame.KeyValue[string, int], 10)
 
 	wf := flame.NewWorkflow()
+	inc := flame.AddSourceChan(wf, in)
 	a := flame.AddKeySort[string, int](wf)
-	a.AddInput(in)
+	a.Connect(inc)
 	out1 := a.GetOutput()
 
 	wf.Init()

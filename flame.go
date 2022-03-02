@@ -8,8 +8,8 @@ import (
 )
 
 type Workflow struct {
-	WaitGroup    *sync.WaitGroup
-	Nodes        []Process
+	WaitGroup *sync.WaitGroup
+	Nodes     []Process
 }
 
 type KeyValue[K constraints.Ordered, V any] struct {
@@ -18,7 +18,6 @@ type KeyValue[K constraints.Ordered, V any] struct {
 }
 
 type Node[X, Y any] interface {
-	AddInput(i chan X)
 	GetOutput() chan Y
 	Connect(e Emitter[X])
 }
@@ -44,6 +43,46 @@ func (wf *Workflow) Init() {
 
 func (wf *Workflow) Wait() {
 	wf.WaitGroup.Wait()
+}
+
+/**************************/
+// Source Chan
+/**************************/
+
+type SourceChanNode[X, Y any] struct {
+	Source  chan Y
+	Outputs []chan Y
+}
+
+func AddSourceChan[Y any](w *Workflow, i chan Y) Node[any, Y] {
+	n := &SourceChanNode[any, Y]{Source: i, Outputs: []chan Y{}}
+	w.Nodes = append(w.Nodes, n)
+	return n
+}
+
+func (n *SourceChanNode[X, Y]) Connect(e Emitter[X]) {
+	//this should throw an error
+}
+
+func (n *SourceChanNode[X, Y]) Init(wf *Workflow) {
+	wf.WaitGroup.Add(1)
+	go func() {
+		for x := range n.Source {
+			for i := range n.Outputs {
+				n.Outputs[i] <- x
+			}
+		}
+		for i := range n.Outputs {
+			close(n.Outputs[i])
+		}
+		wf.WaitGroup.Done()
+	}()
+}
+
+func (n *SourceChanNode[X, Y]) GetOutput() chan Y {
+	m := make(chan Y)
+	n.Outputs = append(n.Outputs, m)
+	return m
 }
 
 /**************************/
@@ -78,10 +117,6 @@ func (n *MapNode[X, Y]) Init(wf *Workflow) {
 	}()
 }
 
-func (n *MapNode[X, Y]) AddInput(i chan X) {
-	n.Input = i
-}
-
 func (n *MapNode[X, Y]) GetOutput() chan Y {
 	m := make(chan Y)
 	n.Outputs = append(n.Outputs, m)
@@ -90,7 +125,7 @@ func (n *MapNode[X, Y]) GetOutput() chan Y {
 
 func (n *MapNode[X, Y]) Connect(e Emitter[X]) {
 	o := e.GetOutput()
-	n.AddInput(o)
+	n.Input = o
 }
 
 /**************************/
@@ -144,13 +179,9 @@ func (s *SortNode[X, Y]) Init(wf *Workflow) {
 	}()
 }
 
-func (n *SortNode[X, Y]) AddInput(i chan KeyValue[X, Y]) {
-	n.Input = i
-}
-
 func (n *SortNode[X, Y]) Connect(e Emitter[KeyValue[X, Y]]) {
 	o := e.GetOutput()
-	n.AddInput(o)
+	n.Input = o
 }
 
 func (n *SortNode[X, Y]) GetOutput() chan KeyValue[X, Y] {
@@ -193,10 +224,6 @@ func (n *ReduceNode[X, Y]) Init(wf *Workflow) {
 	}()
 }
 
-func (n *ReduceNode[X, Y]) AddInput(i chan X) {
-	n.Input = i
-}
-
 func (n *ReduceNode[X, Y]) GetOutput() chan Y {
 	m := make(chan Y)
 	n.Outputs = append(n.Outputs, m)
@@ -205,5 +232,5 @@ func (n *ReduceNode[X, Y]) GetOutput() chan Y {
 
 func (n *ReduceNode[X, Y]) Connect(e Emitter[X]) {
 	o := e.GetOutput()
-	n.AddInput(o)
+	n.Input = o
 }

@@ -1,8 +1,8 @@
 package tests
 
 import (
-  "testing"
 	"github.com/bmeg/flame"
+	"testing"
 )
 
 func Inc(a int) int {
@@ -21,8 +21,9 @@ func TestSingle(t *testing.T) {
 	in := make(chan int, 10)
 
 	wf := flame.NewWorkflow()
+	inc := flame.AddSourceChan(wf, in)
 	a := flame.AddMapper(wf, Inc)
-	a.AddInput(in)
+	a.Connect(inc)
 	b := flame.AddMapper(wf, Inc)
 	b.Connect(a)
 	out := b.GetOutput()
@@ -54,8 +55,9 @@ func TestSplit(t *testing.T) {
 	in := make(chan int, 10)
 
 	wf := flame.NewWorkflow()
+	inc := flame.AddSourceChan(wf, in)
 	a := flame.AddMapper(wf, Inc)
-	a.AddInput(in)
+	a.Connect(inc)
 	b := flame.AddMapper(wf, Inc)
 	b.Connect(a)
 	c := flame.AddMapper(wf, (&Multiply{6}).Run)

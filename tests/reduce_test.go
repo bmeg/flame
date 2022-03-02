@@ -14,8 +14,9 @@ func TestReduce(t *testing.T) {
 	in := make(chan int, 10)
 
 	wf := flame.NewWorkflow()
+	inc := flame.AddSourceChan(wf, in)
 	a := flame.AddReducer(wf, Sum, 0)
-	a.AddInput(in)
+	a.Connect(inc)
 
 	out1 := a.GetOutput()
 	wf.Init()
