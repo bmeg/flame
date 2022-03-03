@@ -27,7 +27,8 @@ func TestSingle(t *testing.T) {
 	b := flame.AddMapper(wf, Inc)
 	b.Connect(a)
 	out := b.GetOutput()
-	wf.Init()
+
+	wf.Start()
 
 	v := []int{1, 2, 3, 4, 5}
 
@@ -65,7 +66,7 @@ func TestSplit(t *testing.T) {
 
 	out1 := b.GetOutput()
 	out2 := c.GetOutput()
-	wf.Init()
+	wf.Start()
 
 	v := []int{1, 2, 3, 4, 5}
 

@@ -19,7 +19,7 @@ func TestReduce(t *testing.T) {
 	a.Connect(inc)
 
 	out1 := a.GetOutput()
-	wf.Init()
+	wf.Start()
 
 	v := []int{1, 2, 3, 4, 5}
 	go func() {

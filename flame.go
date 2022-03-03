@@ -27,17 +27,17 @@ type Emitter[X any] interface {
 }
 
 type Process interface {
-	Init(wf *Workflow)
+	Start(wf *Workflow)
 }
 
 func NewWorkflow() *Workflow {
 	return &Workflow{}
 }
 
-func (wf *Workflow) Init() {
+func (wf *Workflow) Start() {
 	wf.WaitGroup = &sync.WaitGroup{}
 	for i := range wf.Nodes {
-		wf.Nodes[i].Init(wf)
+		wf.Nodes[i].Start(wf)
 	}
 }
 
@@ -64,7 +64,7 @@ func (n *SourceChanNode[X, Y]) Connect(e Emitter[X]) {
 	//this should throw an error
 }
 
-func (n *SourceChanNode[X, Y]) Init(wf *Workflow) {
+func (n *SourceChanNode[X, Y]) Start(wf *Workflow) {
 	wf.WaitGroup.Add(1)
 	go func() {
 		for x := range n.Source {
@@ -101,7 +101,7 @@ func AddMapper[X, Y any](w *Workflow, f func(X) Y) Node[X, Y] {
 	return n
 }
 
-func (n *MapNode[X, Y]) Init(wf *Workflow) {
+func (n *MapNode[X, Y]) Start(wf *Workflow) {
 	wf.WaitGroup.Add(1)
 	go func() {
 		for x := range n.Input {
@@ -160,7 +160,7 @@ func (s *SortNode[X, Y]) Len() int {
 	return len(s.Queue)
 }
 
-func (s *SortNode[X, Y]) Init(wf *Workflow) {
+func (s *SortNode[X, Y]) Start(wf *Workflow) {
 	wf.WaitGroup.Add(1)
 	go func() {
 		for x := range s.Input {
@@ -195,22 +195,22 @@ func (n *SortNode[X, Y]) GetOutput() chan KeyValue[X, Y] {
 /**************************/
 
 type ReduceNode[X, Y any] struct {
-	Start   Y
+	Init    Y
 	Input   chan X
 	Outputs []chan Y
 	Proc    func(X, Y) Y
 }
 
-func AddReducer[X, Y any](w *Workflow, f func(X, Y) Y, start Y) Node[X, Y] {
-	n := &ReduceNode[X, Y]{Proc: f, Outputs: []chan Y{}, Start: start}
+func AddReducer[X, Y any](w *Workflow, f func(X, Y) Y, init Y) Node[X, Y] {
+	n := &ReduceNode[X, Y]{Proc: f, Outputs: []chan Y{}, Init: init}
 	w.Nodes = append(w.Nodes, n)
 	return n
 }
 
-func (n *ReduceNode[X, Y]) Init(wf *Workflow) {
+func (n *ReduceNode[X, Y]) Start(wf *Workflow) {
 	wf.WaitGroup.Add(1)
 	go func() {
-		y := n.Start
+		y := n.Init
 		for x := range n.Input {
 			y = n.Proc(x, y)
 		}

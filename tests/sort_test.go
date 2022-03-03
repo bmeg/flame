@@ -22,7 +22,7 @@ func TestIntSort(t *testing.T) {
 	b := flame.AddKeySort[int, string](wf)
 	b.Connect(a)
 	out1 := b.GetOutput()
-	wf.Init()
+	wf.Start()
 
 	v := []flame.KeyValue[int, string]{
 		{3, "charles"},
@@ -53,7 +53,7 @@ func TestStringSort(t *testing.T) {
 	a.Connect(inc)
 	out1 := a.GetOutput()
 
-	wf.Init()
+	wf.Start()
 
 	v := []flame.KeyValue[string, int]{
 		{"charles", 3},
