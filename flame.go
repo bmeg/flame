@@ -22,6 +22,10 @@ type Node[X, Y any] interface {
 	Connect(e Emitter[X])
 }
 
+type Receiver[X any] interface {
+	Connect(e Emitter[X])
+}
+
 type Emitter[X any] interface {
 	GetOutput() chan X
 }
