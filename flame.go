@@ -108,10 +108,12 @@ func AddMapper[X, Y any](w *Workflow, f func(X) Y) Node[X, Y] {
 func (n *MapNode[X, Y]) Start(wf *Workflow) {
 	wf.WaitGroup.Add(1)
 	go func() {
-		for x := range n.Input {
-			y := n.Proc(x)
-			for i := range n.Outputs {
-				n.Outputs[i] <- y
+		if n.Input != nil {
+			for x := range n.Input {
+				y := n.Proc(x)
+				for i := range n.Outputs {
+					n.Outputs[i] <- y
+				}
 			}
 		}
 		for i := range n.Outputs {
@@ -151,11 +153,13 @@ func AddFlatMapper[X, Y any](w *Workflow, f func(X) []Y) Node[X, Y] {
 func (n *FlatMapNode[X, Y]) Start(wf *Workflow) {
 	wf.WaitGroup.Add(1)
 	go func() {
-		for x := range n.Input {
-			y := n.Proc(x)
-			for i := range n.Outputs {
-				for _, z := range y {
-					n.Outputs[i] <- z
+		if n.Input != nil {
+			for x := range n.Input {
+				y := n.Proc(x)
+				for i := range n.Outputs {
+					for _, z := range y {
+						n.Outputs[i] <- z
+					}
 				}
 			}
 		}
@@ -212,8 +216,10 @@ func (s *SortNode[X, Y]) Len() int {
 func (s *SortNode[X, Y]) Start(wf *Workflow) {
 	wf.WaitGroup.Add(1)
 	go func() {
-		for x := range s.Input {
-			s.Queue = append(s.Queue, x)
+		if s.Input != nil {
+			for x := range s.Input {
+				s.Queue = append(s.Queue, x)
+			}
 		}
 		sort.Sort(s)
 		for _, y := range s.Queue {
@@ -260,8 +266,10 @@ func (n *ReduceNode[X, Y]) Start(wf *Workflow) {
 	wf.WaitGroup.Add(1)
 	go func() {
 		y := n.Init
-		for x := range n.Input {
-			y = n.Proc(x, y)
+		if n.Input != nil {
+			for x := range n.Input {
+				y = n.Proc(x, y)
+			}
 		}
 		for i := range n.Outputs {
 			n.Outputs[i] <- y
