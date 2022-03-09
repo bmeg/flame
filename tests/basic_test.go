@@ -1,7 +1,9 @@
 package tests
 
 import (
+	"fmt"
 	"github.com/bmeg/flame"
+	"io"
 	"testing"
 )
 
@@ -103,4 +105,37 @@ func TestSplit(t *testing.T) {
 	}()
 
 	wf.Wait()
+}
+
+func TestSourceSink(t *testing.T) {
+	counter := 5
+	getNums := func() (int, error) {
+		if counter < 0 {
+			return 0, io.EOF
+		}
+		counter = counter - 1
+		return counter, nil
+	}
+
+	outCounter := 0
+	sink := func(i int) {
+		outCounter += i
+	}
+
+	wf := flame.NewWorkflow()
+	inc := flame.AddSource(wf, getNums)
+	a := flame.AddMapper(wf, Inc)
+	a.Connect(inc)
+	b := flame.AddSink(wf, sink)
+	b.Connect(a)
+
+	wf.Start()
+	wf.Wait()
+
+	fmt.Printf("Sink %d\n", outCounter)
+	val := 1 + 2 + 3 + 4 + 5
+	if outCounter != val {
+		t.Errorf("Incorrect count received: %d != %d", outCounter, val)
+	}
+
 }
