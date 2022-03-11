@@ -156,8 +156,10 @@ func (n *SinkNode[X, Y]) Connect(e Emitter[X]) {
 func (n *SinkNode[X, Y]) Start(wf *Workflow) {
 	wf.WaitGroup.Add(1)
 	go func() {
-		for x := range n.Input {
-			n.Sink(x)
+		if n.Input != nil {
+			for x := range n.Input {
+				n.Sink(x)
+			}
 		}
 		wf.WaitGroup.Done()
 	}()
