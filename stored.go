@@ -68,7 +68,6 @@ func (n *ReduceKeyNode[K, X, Y]) Start(wf *Workflow) {
 				db.Set(key, bSize, nil)
 				dump.Write(data)
 				dump.Write([]byte("\n"))
-				log.Printf("Stored: %s", x.Key)
 			}
 		}
 
@@ -77,7 +76,6 @@ func (n *ReduceKeyNode[K, X, Y]) Start(wf *Workflow) {
 			k := it.Key()
 			dSize := binary.BigEndian.Uint64(it.Value())
 			key := k[0 : len(k)-8]
-			log.Printf("Found: %s", key)
 			bPos := k[len(k)-8:]
 			dPos := binary.BigEndian.Uint64(bPos)
 			data := make([]byte, dSize)
