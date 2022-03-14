@@ -40,4 +40,6 @@ func TestReduce(t *testing.T) {
 		fmt.Printf("sum: %d\n", y)
 	}
 
+	wf.Wait()
+
 }

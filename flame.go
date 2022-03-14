@@ -1,6 +1,8 @@
 package flame
 
 import (
+	"io/ioutil"
+	"path/filepath"
 	"sort"
 	"sync"
 
@@ -10,6 +12,7 @@ import (
 type Workflow struct {
 	WaitGroup *sync.WaitGroup
 	Nodes     []Process
+	WorkDir   string
 }
 
 type KeyValue[K constraints.Ordered, V any] struct {
@@ -45,8 +48,16 @@ func (wf *Workflow) Start() {
 	}
 }
 
+func (wf *Workflow) SetWorkDir(path string) {
+	wf.WorkDir, _ = filepath.Abs(path)
+}
+
 func (wf *Workflow) Wait() {
 	wf.WaitGroup.Wait()
+}
+
+func (wf *Workflow) GetTmpDir() (string, error) {
+	return ioutil.TempDir(wf.WorkDir, "flame_")
 }
 
 /**************************/
