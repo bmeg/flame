@@ -18,6 +18,10 @@ type byteAble interface {
 	string
 }
 
+const (
+	maxWriterBuffer = 3 << 30
+)
+
 type ReduceKeyNode[K byteAble, X, Y any] struct {
 	Init    Y
 	Input   chan KeyValue[K, X]
@@ -47,6 +51,8 @@ func (n *ReduceKeyNode[K, X, Y]) Start(wf *Workflow) {
 		}
 
 		if n.Input != nil {
+			batch := db.NewBatch()
+			curSize := int(0)
 			for x := range n.Input {
 				//marshal the data, and get the size
 				data, _ := json.Marshal(x.Value)
@@ -65,10 +71,18 @@ func (n *ReduceKeyNode[K, X, Y]) Start(wf *Workflow) {
 				//The means entries with the same user key will be stored in seperate
 				//records
 				key := bytes.Join([][]byte{[]byte(x.Key), bPos}, []byte{})
-				db.Set(key, bSize, nil)
+				batch.Set(key, bSize, nil)
+				curSize += len(key) + len(bSize)
+				if curSize > maxWriterBuffer {
+					batch.Commit(nil)
+					batch.Reset()
+					curSize = 0
+				}
 				dump.Write(data)
 				dump.Write([]byte("\n"))
 			}
+			batch.Commit(nil)
+			batch.Close()
 		}
 
 		it := db.NewIter(&pebble.IterOptions{})
