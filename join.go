@@ -1,31 +1,29 @@
 package flame
 
 import (
-  "sync"
-  "golang.org/x/exp/constraints"
+	"sync"
+
+	"golang.org/x/exp/constraints"
 )
 
-
 type JoinNode[K constraints.Ordered, X, Y, Z any] struct {
-	LeftInput   chan KeyValue[K, X]
-  RightInput   chan KeyValue[K, Y]
-	Outputs []chan KeyValue[K, Z]
-	Proc    func(K, []X, []Y) Z
+	LeftInput  chan KeyValue[K, X]
+	RightInput chan KeyValue[K, Y]
+	Outputs    []chan KeyValue[K, Z]
+	Proc       func(K, []X, []Y) Z
 }
 
-func AddJoinKey[K constraints.Ordered, X, Y, Z any](w *Workflow, f func(K, []X, []Y) Z ) *JoinNode[K, X, Y, Z] {
-	n := &JoinNode[K,X,Y,Z]{Proc: f, Outputs: []chan KeyValue[K,Z]{}}
+func AddJoinKey[K constraints.Ordered, X, Y, Z any](w *Workflow, f func(K, []X, []Y) Z) *JoinNode[K, X, Y, Z] {
+	n := &JoinNode[K, X, Y, Z]{Proc: f, Outputs: []chan KeyValue[K, Z]{}}
 	w.Nodes = append(w.Nodes, n)
 	return n
 }
-
 
 func (n *JoinNode[K, X, Y, Z]) GetOutput() chan KeyValue[K, Z] {
 	m := make(chan KeyValue[K, Z])
 	n.Outputs = append(n.Outputs, m)
 	return m
 }
-
 
 func (n *JoinNode[K, X, Y, Z]) ConnectLeft(e Emitter[KeyValue[K, X]]) {
 	o := e.GetOutput()
@@ -40,55 +38,54 @@ func (n *JoinNode[K, X, Y, Z]) ConnectRight(e Emitter[KeyValue[K, Y]]) {
 func (n *JoinNode[K, X, Y, Z]) Start(wf *Workflow) {
 	wf.WaitGroup.Add(1)
 
-
-  wg := &sync.WaitGroup{}
-  wg.Add(2)
-  left := map[K][]X{}
-  right := map[K][]Y{}
+	wg := &sync.WaitGroup{}
+	wg.Add(2)
+	left := map[K][]X{}
+	right := map[K][]Y{}
 	go func() {
-    for i := range n.LeftInput {
-      if x, ok := left[i.Key]; ok {
-        left[i.Key] = append(x,i.Value)
-      } else {
-        left[i.Key] = []X{i.Value}
-      }
-    }
-    wg.Done()
-  }()
-  go func() {
-    for i := range n.RightInput {
-      if x, ok := right[i.Key]; ok {
-        right[i.Key] = append(x,i.Value)
-      } else {
-        right[i.Key] = []Y{i.Value}
-      }
-    }
-    wg.Done()
-  }()
+		for i := range n.LeftInput {
+			if x, ok := left[i.Key]; ok {
+				left[i.Key] = append(x, i.Value)
+			} else {
+				left[i.Key] = []X{i.Value}
+			}
+		}
+		wg.Done()
+	}()
+	go func() {
+		for i := range n.RightInput {
+			if x, ok := right[i.Key]; ok {
+				right[i.Key] = append(x, i.Value)
+			} else {
+				right[i.Key] = []Y{i.Value}
+			}
+		}
+		wg.Done()
+	}()
 
-  go func() {
-    wg.Wait()
+	go func() {
+		wg.Wait()
 
-    for key, lVals := range left {
-      if rVals, ok := right[key]; ok {
-        for i := range n.Outputs {
-          n.Outputs[i] <- KeyValue[K, Z]{key, n.Proc(key, lVals, rVals)}
-        }
-      }
-    }
+		for key, lVals := range left {
+			if rVals, ok := right[key]; ok {
+				for i := range n.Outputs {
+					n.Outputs[i] <- KeyValue[K, Z]{key, n.Proc(key, lVals, rVals)}
+				}
+			}
+		}
 
-    for i := range n.Outputs {
+		for i := range n.Outputs {
 			close(n.Outputs[i])
 		}
-    wf.WaitGroup.Done()
-  }()
+		wf.WaitGroup.Done()
+	}()
 
 }
 
-type KeySort[X constraints.Ordered, Y any] []KeyValue[X,Y]
+type KeySort[X constraints.Ordered, Y any] []KeyValue[X, Y]
 
 // Swap is part of sort.Interface.
-func (s KeySort[X,Y]) Swap(i, j int) {
+func (s KeySort[X, Y]) Swap(i, j int) {
 	(s)[i], (s)[j] = (s)[j], (s)[i]
 }
 

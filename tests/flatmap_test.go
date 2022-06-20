@@ -1,13 +1,14 @@
 package tests
 
 import (
-  "strings"
-	"github.com/bmeg/flame"
+	"strings"
 	"testing"
+
+	"github.com/bmeg/flame"
 )
 
 func Sep(x string) []string {
-  return strings.Split(x, "")
+	return strings.Split(x, "")
 }
 
 func TestFlatMap(t *testing.T) {
@@ -29,14 +30,14 @@ func TestFlatMap(t *testing.T) {
 		close(in)
 	}()
 
-  count := 0
+	count := 0
 	for y := range out1 {
-    if len(y) != 1 {
-      t.Errorf("Incorrect length output")      
-    }
-    count += 1
+		if len(y) != 1 {
+			t.Errorf("Incorrect length output")
+		}
+		count += 1
 	}
-  if count != len(v[0]) + len(v[1]) {
-    t.Errorf("Incorrect output count")
-  }
+	if count != len(v[0])+len(v[1]) {
+		t.Errorf("Incorrect output count")
+	}
 }

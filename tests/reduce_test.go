@@ -2,8 +2,9 @@ package tests
 
 import (
 	"fmt"
-	"github.com/bmeg/flame"
 	"testing"
+
+	"github.com/bmeg/flame"
 )
 
 func Sum(x, y int) int {

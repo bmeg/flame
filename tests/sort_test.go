@@ -2,8 +2,9 @@ package tests
 
 import (
 	"fmt"
-	"github.com/bmeg/flame"
 	"testing"
+
+	"github.com/bmeg/flame"
 )
 
 func KeyInc(x flame.KeyValue[int, string]) flame.KeyValue[int, string] {

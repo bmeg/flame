@@ -1,8 +1,9 @@
 package tests
 
 import (
-	"github.com/bmeg/flame"
 	"testing"
+
+	"github.com/bmeg/flame"
 )
 
 func KeySum(k string, x, y int) int {

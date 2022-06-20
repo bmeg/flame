@@ -2,9 +2,10 @@ package tests
 
 import (
 	"fmt"
-	"github.com/bmeg/flame"
 	"io"
 	"testing"
+
+	"github.com/bmeg/flame"
 )
 
 func Inc(a int) int {
