@@ -5,14 +5,15 @@ package flame
 /**************************/
 
 type MapPoolNode[X, Y any] struct {
-	Input     chan X
-	Outputs   []chan Y
-	Proc      func(X) Y
-	ProcCount int
+	Input       chan X
+	Outputs     []chan Y
+	Proc        func(X) Y
+	ProcCount   int
+	ChannelSize int
 }
 
 func AddMapperPool[X, Y any](w *Workflow, f func(X) Y, nthread int) Node[X, Y] {
-	n := &MapPoolNode[X, Y]{Proc: f, Outputs: []chan Y{}, ProcCount: nthread}
+	n := &MapPoolNode[X, Y]{Proc: f, Outputs: []chan Y{}, ProcCount: nthread, ChannelSize: 10}
 	w.Nodes = append(w.Nodes, n)
 	return n
 }
@@ -20,13 +21,17 @@ func AddMapperPool[X, Y any](w *Workflow, f func(X) Y, nthread int) Node[X, Y] {
 func (n *MapPoolNode[X, Y]) Start(wf *Workflow) {
 	wf.WaitGroup.Add(1)
 
+	if n.ChannelSize <= 0 {
+		n.ChannelSize = 1
+	}
+
 	wkrInputs := make([]chan X, n.ProcCount)
 	wkrOutputs := make([]chan Y, n.ProcCount)
 
 	//worker pool
 	for i := 0; i < n.ProcCount; i++ {
-		wkrInputs[i] = make(chan X, 3)
-		wkrOutputs[i] = make(chan Y, 3)
+		wkrInputs[i] = make(chan X, n.ChannelSize)
+		wkrOutputs[i] = make(chan Y, n.ChannelSize)
 		go func(wNum int) {
 			if n.Input != nil {
 				for x := range wkrInputs[wNum] {
