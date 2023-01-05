@@ -8,16 +8,18 @@ import (
 	"github.com/bmeg/flame"
 )
 
-func Sep(x string) []string {
-	return strings.Split(x, "")
+func SepStream(in chan string, out chan []string) {
+	for i := range in {
+		out <- strings.Split(i, "")
+	}
 }
 
-func TestFlatMap(t *testing.T) {
+func TestStream(t *testing.T) {
 	in := make(chan string, 10)
 
 	wf := flame.NewWorkflow()
 	inc := flame.AddSourceChan(wf, in)
-	a := flame.AddFlatMapper(wf, Sep)
+	a := flame.AddStreamer(wf, SepStream)
 	a.Connect(inc)
 
 	out1 := a.GetOutput()
@@ -34,12 +36,12 @@ func TestFlatMap(t *testing.T) {
 	count := 0
 	for y := range out1 {
 		fmt.Printf("%#v\n", y)
-		if len(y) != 1 {
+		if len(strings.Join(y, "")) != 5 {
 			t.Errorf("Incorrect length output")
 		}
 		count += 1
 	}
-	if count != len(v[0])+len(v[1]) {
+	if count != 2 {
 		t.Errorf("Incorrect output count")
 	}
 }
