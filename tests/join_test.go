@@ -1,31 +1,52 @@
 package tests
 
 import (
+	"fmt"
 	"testing"
 
 	"github.com/bmeg/flame"
 )
 
-func KeyJoin(k string, x, y []int) int {
-	s := 0
-	for _, v := range x {
-		s += v
+func zip(a chan string, b chan string, out chan []string) {
+	okA := true
+	okB := true
+	for okA && okB {
+		stringA := ""
+		stringB := ""
+		stringA, okA = <-a
+		stringB, okB = <-b
+		if okA && okB {
+			out <- []string{stringA, stringB}
+		}
 	}
-	for _, v := range y {
-		s += v
-	}
-	return s
 }
 
-func TestJoinKey(t *testing.T) {
-	left := make(chan flame.KeyValue[string, int], 10)
-	right := make(chan flame.KeyValue[string, int], 10)
+func TestJoinZip(t *testing.T) {
+	left := make(chan string, 10)
+	right := make(chan string, 10)
+
+	leftIn := []string{"Hello", "Alice", "Town"}
+	rightIn := []string{"World", "Bob", "City"}
+
+	go func() {
+		for _, i := range leftIn {
+			left <- i
+		}
+		close(left)
+	}()
+
+	go func() {
+		for _, i := range rightIn {
+			right <- i
+		}
+		close(right)
+	}()
 
 	wf := flame.NewWorkflow()
 	wf.SetWorkDir("./")
 	inL := flame.AddSourceChan(wf, left)
 	inR := flame.AddSourceChan(wf, right)
-	a := flame.AddJoinKey(wf, KeyJoin)
+	a := flame.AddJoin(wf, zip)
 
 	a.ConnectLeft(inL)
 	a.ConnectRight(inR)
@@ -33,42 +54,12 @@ func TestJoinKey(t *testing.T) {
 	out1 := a.GetOutput()
 	wf.Start()
 
-	v1 := []flame.KeyValue[string, int]{
-		{"b", 2},
-		{"a", 1},
-		{"c", 4},
-	}
-	go func() {
-		for _, n := range v1 {
-			left <- n
-		}
-		close(left)
-	}()
-
-	v2 := []flame.KeyValue[string, int]{
-		{"c", 10},
-		{"a", 3},
-		{"b", 8},
-	}
-	go func() {
-		for _, n := range v2 {
-			right <- n
-		}
-		close(right)
-	}()
-
-	results := map[string]int{
-		"a": 4,
-		"b": 10,
-		"c": 14,
-	}
-
 	count := 0
 	for y := range out1 {
 		count++
-		//fmt.Printf("out: %#v\n", y)
-		if y.Value != results[y.Key] {
-			t.Errorf("Incorrect output")
+		fmt.Printf("out: %#v\n", y)
+		if len(y) != 2 {
+			t.Errorf("Not zipped")
 		}
 	}
 	if count != 3 {
@@ -76,4 +67,5 @@ func TestJoinKey(t *testing.T) {
 	}
 
 	wf.Wait()
+
 }
