@@ -1,24 +1,24 @@
 package flame
 
 /**************************/
-// Map Pool
+// FlatMapper
 /**************************/
 
-type MapPoolNode[X, Y any] struct {
+type FlatMapPoolNode[X, Y any] struct {
 	Input       chan X
 	Outputs     []chan Y
-	Proc        func(X) Y
+	Proc        func(X) []Y
 	ProcCount   int
 	ChannelSize int
 }
 
-func AddMapperPool[X, Y any](w *Workflow, f func(X) Y, nthread int) Node[X, Y] {
-	n := &MapPoolNode[X, Y]{Proc: f, Outputs: []chan Y{}, ProcCount: nthread, ChannelSize: 10}
+func AddFlatMapperPool[X, Y any](w *Workflow, f func(X) []Y, nthread int) Node[X, Y] {
+	n := &FlatMapPoolNode[X, Y]{Proc: f, Outputs: []chan Y{}, ProcCount: nthread}
 	w.Nodes = append(w.Nodes, n)
 	return n
 }
 
-func (n *MapPoolNode[X, Y]) Start(wf *Workflow) {
+func (n *FlatMapPoolNode[X, Y]) Start(wf *Workflow) {
 	wf.WaitGroup.Add(1)
 
 	if n.ChannelSize <= 0 {
@@ -36,7 +36,9 @@ func (n *MapPoolNode[X, Y]) Start(wf *Workflow) {
 			if n.Input != nil {
 				for x := range wkrInputs[wNum] {
 					y := n.Proc(x)
-					wkrOutputs[wNum] <- y
+					for _, z := range y {
+						wkrOutputs[wNum] <- z
+					}
 				}
 			}
 			close(wkrOutputs[wNum])
@@ -82,13 +84,13 @@ func (n *MapPoolNode[X, Y]) Start(wf *Workflow) {
 
 }
 
-func (n *MapPoolNode[X, Y]) GetOutput() chan Y {
+func (n *FlatMapPoolNode[X, Y]) GetOutput() chan Y {
 	m := make(chan Y)
 	n.Outputs = append(n.Outputs, m)
 	return m
 }
 
-func (n *MapPoolNode[X, Y]) Connect(e Emitter[X]) {
+func (n *FlatMapPoolNode[X, Y]) Connect(e Emitter[X]) {
 	o := e.GetOutput()
 	n.Input = o
 }
