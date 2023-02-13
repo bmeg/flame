@@ -26,19 +26,17 @@ func (n *FlatMapPoolNode[X, Y]) Start(wf *Workflow) {
 	}
 
 	wkrInputs := make([]chan X, n.ProcCount)
-	wkrOutputs := make([]chan Y, n.ProcCount)
+	wkrOutputs := make([]chan []Y, n.ProcCount)
 
 	//worker pool
 	for i := 0; i < n.ProcCount; i++ {
 		wkrInputs[i] = make(chan X, n.ChannelSize)
-		wkrOutputs[i] = make(chan Y, n.ChannelSize)
+		wkrOutputs[i] = make(chan []Y, n.ChannelSize)
 		go func(wNum int) {
 			if n.Input != nil {
 				for x := range wkrInputs[wNum] {
 					y := n.Proc(x)
-					for _, z := range y {
-						wkrOutputs[wNum] <- z
-					}
+					wkrOutputs[wNum] <- y
 				}
 			}
 			close(wkrOutputs[wNum])
@@ -69,7 +67,9 @@ func (n *FlatMapPoolNode[X, Y]) Start(wf *Workflow) {
 		for anyTrue(active) {
 			if y, ok := <-wkrOutputs[w]; ok {
 				for i := range n.Outputs {
-					n.Outputs[i] <- y
+					for _, z := range y {
+						n.Outputs[i] <- z
+					}
 				}
 			} else {
 				active[w] = false
