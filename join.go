@@ -29,7 +29,7 @@ func (n *JoinNode[X, Y, Z]) ConnectRight(e Emitter[Y]) {
 	n.RightInput = o
 }
 
-func (n *JoinNode[X, Y, Z]) Start(wf *Workflow) {
+func (n *JoinNode[X, Y, Z]) start(wf *Workflow) {
 	wf.WaitGroup.Add(1)
 	out := make(chan Z, 10)
 	go func() {

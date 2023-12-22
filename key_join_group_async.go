@@ -18,7 +18,7 @@ func AddKeyJoinGroupAsync[K constraints.Ordered, X, Z any](w *Workflow, f func(K
 	return n
 }
 
-func (n *KeyJoinGroupAsyncNode[K, X, Z]) Start(wf *Workflow) {
+func (n *KeyJoinGroupAsyncNode[K, X, Z]) start(wf *Workflow) {
 	wf.WaitGroup.Add(1)
 
 	mut := &sync.Mutex{}

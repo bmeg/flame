@@ -35,7 +35,7 @@ func (n *KeyJoinNode[K, X, Y, Z]) ConnectRight(e Emitter[KeyValue[K, Y]]) {
 	n.RightInput = o
 }
 
-func (n *KeyJoinNode[K, X, Y, Z]) Start(wf *Workflow) {
+func (n *KeyJoinNode[K, X, Y, Z]) start(wf *Workflow) {
 	wf.WaitGroup.Add(1)
 
 	wg := &sync.WaitGroup{}

@@ -36,7 +36,7 @@ func AddReduceKey[K byteAble, X, Y any](w *Workflow, f func(K, X, Y) Y, init Y) 
 	return n
 }
 
-func (n *ReduceKeyNode[K, X, Y]) Start(wf *Workflow) {
+func (n *ReduceKeyNode[K, X, Y]) start(wf *Workflow) {
 	wf.WaitGroup.Add(1)
 
 	jsonChan := make(chan KeyValue[K, []byte], 10)

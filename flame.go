@@ -1,7 +1,7 @@
 package flame
 
 import (
-	"io/ioutil"
+	"os"
 	"path/filepath"
 	"sync"
 
@@ -33,7 +33,7 @@ type Emitter[X any] interface {
 }
 
 type Process interface {
-	Start(wf *Workflow)
+	start(wf *Workflow)
 }
 
 func NewWorkflow() *Workflow {
@@ -43,7 +43,7 @@ func NewWorkflow() *Workflow {
 func (wf *Workflow) Start() {
 	wf.WaitGroup = &sync.WaitGroup{}
 	for i := range wf.Nodes {
-		wf.Nodes[i].Start(wf)
+		wf.Nodes[i].start(wf)
 	}
 }
 
@@ -56,7 +56,7 @@ func (wf *Workflow) Wait() {
 }
 
 func (wf *Workflow) GetTmpDir() (string, error) {
-	return ioutil.TempDir(wf.WorkDir, "flame_")
+	return os.MkdirTemp(wf.WorkDir, "flame_")
 }
 
 /**************************/
@@ -78,7 +78,7 @@ func (n *SourceChanNode[X, Y]) Connect(e Emitter[X]) {
 	//this should throw an error
 }
 
-func (n *SourceChanNode[X, Y]) Start(wf *Workflow) {
+func (n *SourceChanNode[X, Y]) start(wf *Workflow) {
 	wf.WaitGroup.Add(1)
 	go func() {
 		for x := range n.Source {
@@ -118,7 +118,7 @@ func (n *SourceNode[X, Y]) Connect(e Emitter[X]) {
 	//this should throw an error
 }
 
-func (n *SourceNode[X, Y]) Start(wf *Workflow) {
+func (n *SourceNode[X, Y]) start(wf *Workflow) {
 	wf.WaitGroup.Add(1)
 	go func() {
 		for {
@@ -163,7 +163,7 @@ func (n *SinkNode[X, Y]) Connect(e Emitter[X]) {
 	n.Input = o
 }
 
-func (n *SinkNode[X, Y]) Start(wf *Workflow) {
+func (n *SinkNode[X, Y]) start(wf *Workflow) {
 	wf.WaitGroup.Add(1)
 	go func() {
 		if n.Input != nil {

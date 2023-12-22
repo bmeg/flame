@@ -16,7 +16,7 @@ func AddStreamer[X, Y any](w *Workflow, f func(chan X, chan Y)) Node[X, Y] {
 	return n
 }
 
-func (n *StreamNode[X, Y]) Start(wf *Workflow) {
+func (n *StreamNode[X, Y]) start(wf *Workflow) {
 	wf.WaitGroup.Add(1)
 	out := make(chan Y, 10)
 	go func() {
