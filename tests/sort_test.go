@@ -26,11 +26,11 @@ func TestIntSort(t *testing.T) {
 	wf.Start()
 
 	v := []flame.KeyValue[int, string]{
-		{3, "charles"},
-		{2, "bob"},
-		{1, "alice"},
-		{4, "dan"},
-		{5, "edward"},
+		{Key: 3, Value: "charles"},
+		{Key: 2, Value: "bob"},
+		{Key: 1, Value: "alice"},
+		{Key: 4, Value: "dan"},
+		{Key: 5, Value: "edward"},
 	}
 
 	go func() {
@@ -57,11 +57,11 @@ func TestStringSort(t *testing.T) {
 	wf.Start()
 
 	v := []flame.KeyValue[string, int]{
-		{"charles", 3},
-		{"bob", 2},
-		{"alice", 1},
-		{"dan", 4},
-		{"edward", 5},
+		{Key: "charles", Value: 3},
+		{Key: "bob", Value: 2},
+		{Key: "alice", Value: 1},
+		{Key: "dan", Value: 4},
+		{Key: "edward", Value: 5},
 	}
 
 	go func() {

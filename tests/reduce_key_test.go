@@ -23,15 +23,15 @@ func TestReduceKey(t *testing.T) {
 	wf.Start()
 
 	v := []flame.KeyValue[string, int]{
-		{"a", 1},
-		{"a", 1},
-		{"a", 1},
-		{"b", 2},
-		{"b", 2},
-		{"b", 2},
-		{"c", 4},
-		{"c", 5},
-		{"c", 6},
+		{Key: "a", Value: 1},
+		{Key: "a", Value: 1},
+		{Key: "a", Value: 1},
+		{Key: "b", Value: 2},
+		{Key: "b", Value: 2},
+		{Key: "b", Value: 2},
+		{Key: "c", Value: 4},
+		{Key: "c", Value: 5},
+		{Key: "c", Value: 6},
 	}
 	go func() {
 		for _, n := range v {
