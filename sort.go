@@ -38,7 +38,7 @@ func (s *SortNode[X, Y]) Len() int {
 	return len(s.Queue)
 }
 
-func (s *SortNode[X, Y]) Start(wf *Workflow) {
+func (s *SortNode[X, Y]) start(wf *Workflow) {
 	wf.WaitGroup.Add(1)
 	go func() {
 		if s.Input != nil {

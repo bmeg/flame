@@ -18,7 +18,7 @@ func AddFlatMapperPool[X, Y any](w *Workflow, f func(X) []Y, nthread int) Node[X
 	return n
 }
 
-func (n *FlatMapPoolNode[X, Y]) Start(wf *Workflow) {
+func (n *FlatMapPoolNode[X, Y]) start(wf *Workflow) {
 	wf.WaitGroup.Add(1)
 
 	if n.ChannelSize <= 0 {

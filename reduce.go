@@ -11,13 +11,16 @@ type ReduceNode[X, Y any] struct {
 	Proc    func(X, Y) Y
 }
 
+// AddReducer adds a reduce step to the flow. A reducer starts with y = Y_init
+// It then streams the inputs X, calling y = f(x,y). When X closes it emits the last
+// value of y once.
 func AddReducer[X, Y any](w *Workflow, f func(X, Y) Y, init Y) Node[X, Y] {
 	n := &ReduceNode[X, Y]{Proc: f, Outputs: []chan Y{}, Init: init}
 	w.Nodes = append(w.Nodes, n)
 	return n
 }
 
-func (n *ReduceNode[X, Y]) Start(wf *Workflow) {
+func (n *ReduceNode[X, Y]) start(wf *Workflow) {
 	wf.WaitGroup.Add(1)
 	go func() {
 		y := n.Init

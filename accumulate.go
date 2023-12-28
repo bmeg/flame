@@ -26,7 +26,7 @@ func (n *AccumulateNode[K, X, Y]) GetOutput() chan KeyValue[K, Y] {
 	return m
 }
 
-func (n *AccumulateNode[K, X, Y]) Start(wf *Workflow) {
+func (n *AccumulateNode[K, X, Y]) start(wf *Workflow) {
 	wf.WaitGroup.Add(1)
 	go func() {
 		first := true

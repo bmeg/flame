@@ -12,13 +12,15 @@ type MapPoolNode[X, Y any] struct {
 	ChannelSize int
 }
 
+// AddMapperPool adds a map step to the flow. As opposed to MapNode, MapPoolNode uses
+// a pool of N workers to process elements in parallel.
 func AddMapperPool[X, Y any](w *Workflow, f func(X) Y, nthread int) Node[X, Y] {
 	n := &MapPoolNode[X, Y]{Proc: f, Outputs: []chan Y{}, ProcCount: nthread, ChannelSize: 10}
 	w.Nodes = append(w.Nodes, n)
 	return n
 }
 
-func (n *MapPoolNode[X, Y]) Start(wf *Workflow) {
+func (n *MapPoolNode[X, Y]) start(wf *Workflow) {
 	wf.WaitGroup.Add(1)
 
 	if n.ChannelSize <= 0 {

@@ -34,9 +34,9 @@ func TestJoinKey(t *testing.T) {
 	wf.Start()
 
 	v1 := []flame.KeyValue[string, int]{
-		{"b", 2},
-		{"a", 1},
-		{"c", 4},
+		{Key: "b", Value: 2},
+		{Key: "a", Value: 1},
+		{Key: "c", Value: 4},
 	}
 	go func() {
 		for _, n := range v1 {
@@ -46,9 +46,9 @@ func TestJoinKey(t *testing.T) {
 	}()
 
 	v2 := []flame.KeyValue[string, int]{
-		{"c", 10},
-		{"a", 3},
-		{"b", 8},
+		{Key: "c", Value: 10},
+		{Key: "a", Value: 3},
+		{Key: "b", Value: 8},
 	}
 	go func() {
 		for _, n := range v2 {

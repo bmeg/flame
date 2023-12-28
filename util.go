@@ -1,5 +1,6 @@
 package flame
 
+/*
 func allTrue(x []bool) bool {
 	for _, y := range x {
 		if !y {
@@ -8,6 +9,7 @@ func allTrue(x []bool) bool {
 	}
 	return true
 }
+*/
 
 func anyTrue(x []bool) bool {
 	for _, y := range x {

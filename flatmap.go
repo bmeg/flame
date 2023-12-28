@@ -16,7 +16,7 @@ func AddFlatMapper[X, Y any](w *Workflow, f func(X) []Y) Node[X, Y] {
 	return n
 }
 
-func (n *FlatMapNode[X, Y]) Start(wf *Workflow) {
+func (n *FlatMapNode[X, Y]) start(wf *Workflow) {
 	wf.WaitGroup.Add(1)
 	go func() {
 		if n.Input != nil {

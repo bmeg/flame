@@ -23,12 +23,12 @@ func TestAccumulate(t *testing.T) {
 	wf.Start()
 
 	v := []flame.KeyValue[int, string]{
-		{1, "charles"},
-		{1, "bob"},
-		{2, "alice"},
-		{2, "dan"},
-		{3, "edward"},
-		{3, "frank"},
+		{Key: 1, Value: "charles"},
+		{Key: 1, Value: "bob"},
+		{Key: 2, Value: "alice"},
+		{Key: 2, Value: "dan"},
+		{Key: 3, Value: "edward"},
+		{Key: 3, Value: "frank"},
 	}
 
 	go func() {

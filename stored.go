@@ -36,7 +36,7 @@ func AddReduceKey[K byteAble, X, Y any](w *Workflow, f func(K, X, Y) Y, init Y) 
 	return n
 }
 
-func (n *ReduceKeyNode[K, X, Y]) Start(wf *Workflow) {
+func (n *ReduceKeyNode[K, X, Y]) start(wf *Workflow) {
 	wf.WaitGroup.Add(1)
 
 	jsonChan := make(chan KeyValue[K, []byte], 10)
@@ -72,17 +72,32 @@ func (n *ReduceKeyNode[K, X, Y]) Start(wf *Workflow) {
 				//The means entries with the same user key will be stored in seperate
 				//records
 				key := bytes.Join([][]byte{[]byte(x.Key), bPos}, []byte{})
-				batch.Set(key, bSize, nil)
+				err := batch.Set(key, bSize, nil)
+				if err != nil {
+					log.Printf("Write error: %s", err)
+				}
 				curSize += len(key) + len(bSize)
 				if curSize > maxWriterBuffer {
-					batch.Commit(nil)
+					err := batch.Commit(nil)
+					if err != nil {
+						log.Printf("Commit error: %s", err)
+					}
 					batch.Reset()
 					curSize = 0
 				}
-				dump.Write(data)
-				dump.Write([]byte("\n"))
+				_, err = dump.Write(data)
+				if err != nil {
+					log.Printf("write error: %s", err)
+				}
+				_, err = dump.Write([]byte("\n"))
+				if err != nil {
+					log.Printf("write error: %s", err)
+				}
 			}
-			batch.Commit(nil)
+			err = batch.Commit(nil)
+			if err != nil {
+				log.Printf("Log error: %s", err)
+			}
 			batch.Close()
 		}
 
@@ -94,8 +109,10 @@ func (n *ReduceKeyNode[K, X, Y]) Start(wf *Workflow) {
 			bPos := k[len(k)-8:]
 			dPos := binary.BigEndian.Uint64(bPos)
 			data := make([]byte, dSize)
-			dump.ReadAt(data, int64(dPos))
-			jsonChan <- KeyValue[K, []byte]{Key: K(key), Value: data}
+			_, err = dump.ReadAt(data, int64(dPos))
+			if err == nil {
+				jsonChan <- KeyValue[K, []byte]{Key: K(key), Value: data}
+			}
 		}
 		dump.Close()
 		db.Close()
