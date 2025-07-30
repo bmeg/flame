@@ -101,7 +101,7 @@ func (n *ReduceKeyNode[K, X, Y]) start(wf *Workflow) {
 			batch.Close()
 		}
 
-		it := db.NewIter(&pebble.IterOptions{})
+		it, _ := db.NewIter(&pebble.IterOptions{})
 		for it.First(); it.Valid(); it.Next() {
 			k := it.Key()
 			dSize := binary.BigEndian.Uint64(it.Value())
