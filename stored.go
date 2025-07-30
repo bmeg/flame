@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/binary"
 	"encoding/json"
+	"fmt"
 	"log"
 	"os"
 	"path/filepath"
@@ -31,6 +32,7 @@ type ReduceKeyNode[K byteAble, X, Y any] struct {
 }
 
 func AddReduceKey[K byteAble, X, Y any](w *Workflow, f func(K, X, Y) Y, init Y) Node[KeyValue[K, X], KeyValue[K, Y]] {
+	fmt.Printf("Got init!!!: %#v\n", init)
 	n := &ReduceKeyNode[K, X, Y]{Proc: f, Outputs: []chan KeyValue[K, Y]{}, Init: init}
 	w.Nodes = append(w.Nodes, n)
 	return n
@@ -101,7 +103,7 @@ func (n *ReduceKeyNode[K, X, Y]) start(wf *Workflow) {
 			batch.Close()
 		}
 
-		it := db.NewIter(&pebble.IterOptions{})
+		it, _ := db.NewIter(&pebble.IterOptions{})
 		for it.First(); it.Valid(); it.Next() {
 			k := it.Key()
 			dSize := binary.BigEndian.Uint64(it.Value())
@@ -136,7 +138,9 @@ func (n *ReduceKeyNode[K, X, Y]) start(wf *Workflow) {
 		var key K
 		var last Y
 		for d := range dataChan {
+			fmt.Printf("!!!!Data %#v %#v\n", d.Key, key)
 			if d.Key != key {
+				fmt.Printf("!!! new key\n")
 				if !first {
 					for i := range n.Outputs {
 						n.Outputs[i] <- KeyValue[K, Y]{key, last}
@@ -145,6 +149,7 @@ func (n *ReduceKeyNode[K, X, Y]) start(wf *Workflow) {
 					first = false
 				}
 				key = d.Key
+				fmt.Printf("!!!passing init: %#v\n", n.Init)
 				last = n.Proc(key, d.Value, n.Init)
 			} else {
 				last = n.Proc(key, d.Value, last)
