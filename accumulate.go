@@ -1,3 +1,7 @@
+// Package flame provides a lightweight, generic flow‑processing framework.
+// It defines a set of nodes that can be wired together to build data pipelines.
+// The nodes are generic over key and value types, enabling type‑safe collection
+// operations such as map, reduce, join, and accumulation.
 package flame
 
 import "golang.org/x/exp/constraints"
