@@ -1,3 +1,5 @@
+// Package flame provides a lightweight, generic flow‑processing framework.
+// It defines nodes for reducing streams of data using user‑supplied functions.
 package flame
 
 /**************************/
